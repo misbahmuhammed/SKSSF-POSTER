@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKSSF Poster Generator</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Create Your Poster</h1>
+        
+        <form id="posterForm" onsubmit="return false;">
+            <div class="form-group">
+                <label for="firstName">First Name</label>
+                <input type="text" id="firstName" placeholder="Enter your first name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="lastName">Last Name</label>
+                <input type="text" id="lastName" placeholder="Enter your last name" required>
+            </div>
+
+            <div class="form-group">
+                <label>Upload Photo (JPG/PNG)</label>
+                <label for="imageUpload" class="file-input-wrapper" id="fileInputLabel">
+                    <span id="fileLabel">Click to select photo</span>
+                    <input type="file" id="imageUpload" accept="image/jpeg, image/png" required>
+                    <span id="fileName"></span>
+                </label>
+            </div>
+
+            <button type="button" class="btn btn-primary" id="generateBtn">Generate Poster</button>
+        </form>
+
+        <div id="outputArea" class="output-section hidden">
+            <h2>Your Poster is Ready!</h2>
+            <img id="posterPreview" alt="Generated Poster Preview">
+            <a href="#" id="downloadBtn" class="btn btn-secondary" download="skssf-poster.png">Download Poster</a>
+        </div>
+    </div>
+
+    <canvas id="posterCanvas"></canvas>
+
+</body>
+</html>
