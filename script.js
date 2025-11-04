@@ -22,7 +22,8 @@ window.onload = () => {
     // Update the file input text when a file is selected and show crop modal
     imageUpload.addEventListener("change", (e) => {
         if (imageUpload.files.length > 0) {
-            const name = imageUpload.files[0].name;
+            const file = imageUpload.files[0];
+            const name = file.name;
             fileNameEl.textContent = name;
             fileInputLabel.classList.add("file-selected");
             
@@ -60,6 +61,35 @@ window.onload = () => {
                 openCropBtn.classList.add('hidden');
                 openCropBtn.disabled = true;
             }
+        }
+    });
+
+    // Crop modal handlers
+    function resetCropper() {
+        document.getElementById('cropModal').classList.add('hidden');
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+        // Reset the file input completely
+        imageUpload.value = '';
+        fileNameEl.textContent = '';
+        fileInputLabel.classList.remove('file-selected');
+    }
+
+    document.getElementById('closeCropModal').addEventListener('click', resetCropper);
+    document.getElementById('cancelCrop').addEventListener('click', resetCropper);
+
+    document.getElementById('applyCrop').addEventListener('click', () => {
+        if (cropper) {
+            croppedImage = cropper.getCroppedCanvas().toDataURL();
+            document.getElementById('cropModal').classList.add('hidden');
+            cropper.destroy();
+            cropper = null;
+            // Clear the file input but keep the filename displayed
+            const fileName = imageUpload.files[0].name;
+            imageUpload.value = ''; // Reset the file input
+            fileNameEl.textContent = fileName + ' (Cropped)';
         }
     });
 
@@ -145,8 +175,13 @@ window.onload = () => {
         };
 
         // 4. Start loading the images
-        baseImage.src = "template.jpg"; // <-- This is the key change!
-        userImage.src = URL.createObjectURL(file);
+        baseImage.src = "template.jpg";
+        if (croppedImage) {
+            userImage.src = croppedImage;
+            croppedImage = null; // Clear it after use
+        } else {
+            userImage.src = URL.createObjectURL(file);
+        }
     });
 
     function drawCanvas(firstName, lastName, baseImage, userImage) {
@@ -156,6 +191,7 @@ window.onload = () => {
 
         // Draw the new background image (bg.jpg) synchronously before everything else
         const bgImg = new window.Image();
+        bgImg.crossOrigin = "Anonymous";  // Add cross-origin support
         bgImg.onload = function() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
@@ -218,9 +254,17 @@ window.onload = () => {
             // Reset button
             generateBtn.textContent = 'Generate Poster';
             generateBtn.disabled = false;
+            
+            // Hide the cropping feature and file input after generating
+            document.querySelector('.file-input-wrapper').style.display = 'none';
+            document.getElementById('cropModal').classList.add('hidden');
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
         };
-        // Use absolute or relative path as needed
-        bgImg.src = './bg.jpg';
+        // Use the template image as background
+        bgImg.src = '111612.jpg';
     }
 
     // Helper: draw a rounded rectangle path
