@@ -16,15 +16,79 @@ window.onload = () => {
     const previewImg = document.getElementById("posterPreview");
     const downloadBtn = document.getElementById("downloadBtn");
 
-    // Update the file input text when a file is selected
-    imageUpload.addEventListener("change", () => {
+    let cropper = null;
+    let croppedImage = null;
+
+    // Update the file input text when a file is selected and show crop modal
+    imageUpload.addEventListener("change", (e) => {
         if (imageUpload.files.length > 0) {
             const name = imageUpload.files[0].name;
             fileNameEl.textContent = name;
             fileInputLabel.classList.add("file-selected");
+            
+            // Show crop modal
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const cropImage = document.getElementById('cropImage');
+                cropImage.src = event.target.result;
+                
+                // Initialize cropper
+                if (cropper) {
+                    cropper.destroy();
+                }
+                cropper = new Cropper(cropImage, {
+                    aspectRatio: 3/4,
+                    viewMode: 1,
+                    dragMode: 'move',
+                    autoCropArea: 1,
+                    restore: false,
+                    guides: true,
+                    center: true,
+                    highlight: false,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    toggleDragModeOnDblclick: false,
+                });
+                
+                document.getElementById('cropModal').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
         } else {
             fileNameEl.textContent = "";
             fileInputLabel.classList.remove("file-selected");
+            if (openCropBtn) {
+                openCropBtn.classList.add('hidden');
+                openCropBtn.disabled = true;
+            }
+        }
+    });
+
+    // Crop modal handlers
+    function resetCropper() {
+        document.getElementById('cropModal').classList.add('hidden');
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+        // Reset the file input completely
+        imageUpload.value = '';
+        fileNameEl.textContent = '';
+        fileInputLabel.classList.remove('file-selected');
+    }
+
+    document.getElementById('closeCropModal').addEventListener('click', resetCropper);
+    document.getElementById('cancelCrop').addEventListener('click', resetCropper);
+
+    document.getElementById('applyCrop').addEventListener('click', () => {
+        if (cropper) {
+            croppedImage = cropper.getCroppedCanvas().toDataURL();
+            document.getElementById('cropModal').classList.add('hidden');
+            cropper.destroy();
+            cropper = null;
+            // Clear the file input but keep the filename displayed
+            const fileName = imageUpload.files[0].name;
+            imageUpload.value = ''; // Reset the file input
+            fileNameEl.textContent = fileName + ' (Cropped)';
         }
     });
 
