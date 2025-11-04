@@ -2,7 +2,6 @@
 
 // Wait for the entire page to load
 window.onload = () => {
-
     // Get all the HTML elements
     const generateBtn = document.getElementById("generateBtn");
     const imageUpload = document.getElementById("imageUpload");
@@ -19,7 +18,69 @@ window.onload = () => {
     let cropper = null;
     let croppedImage = null;
 
-    // Update the file input text when a file is selected and show crop modal
+    // Mobile detection
+    function isMobileDevice() {
+        return /Mobi|Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent) || window.innerWidth <= 700;
+    }
+
+    // Cropper initialization with mobile-friendly options
+    function initCropper(image) {
+        if (cropper) {
+            cropper.destroy();
+        }
+        cropper = new Cropper(image, {
+            aspectRatio: 3/4,
+            viewMode: 1,
+            dragMode: 'move',
+            autoCropArea: 1,
+            restore: false,
+            guides: true,
+            center: true,
+            highlight: false,
+            cropBoxMovable: true,
+            cropBoxResizable: true,
+            toggleDragModeOnDblclick: false,
+            responsive: true,
+            zoomOnTouch: true,
+            zoomOnWheel: false,
+            minContainerHeight: 300,
+        });
+    }
+
+    // Crop control handlers
+    const zoomInBtn = document.getElementById('zoomIn');
+    const zoomOutBtn = document.getElementById('zoomOut');
+    const rotateLeftBtn = document.getElementById('rotateLeft');
+    const rotateRightBtn = document.getElementById('rotateRight');
+    const resetCropViewBtn = document.getElementById('resetCropView');
+    const openCropBtn = document.getElementById('openCropBtn');
+
+    if (zoomInBtn) zoomInBtn.addEventListener('click', () => cropper && cropper.zoom(0.1));
+    if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => cropper && cropper.zoom(-0.1));
+    if (rotateLeftBtn) rotateLeftBtn.addEventListener('click', () => cropper && cropper.rotate(-90));
+    if (rotateRightBtn) rotateRightBtn.addEventListener('click', () => cropper && cropper.rotate(90));
+    if (resetCropViewBtn) resetCropViewBtn.addEventListener('click', () => cropper && cropper.reset());
+
+    // Open cropper on mobile
+    if (openCropBtn) {
+        openCropBtn.addEventListener('click', () => {
+            if (!imageUpload.files || !imageUpload.files[0]) {
+                alert('Please select an image first.');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const cropImage = document.getElementById('cropImage');
+                cropImage.src = event.target.result;
+                initCropper(cropImage);
+                document.getElementById('cropModal').classList.remove('hidden');
+                openCropBtn.classList.add('hidden');
+            };
+            reader.readAsDataURL(imageUpload.files[0]);
+        });
+    }
+
+    // File selection handler
     imageUpload.addEventListener("change", (e) => {
         if (imageUpload.files.length > 0) {
             const file = imageUpload.files[0];
@@ -27,33 +88,21 @@ window.onload = () => {
             fileNameEl.textContent = name;
             fileInputLabel.classList.add("file-selected");
             
-            // Show crop modal
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const cropImage = document.getElementById('cropImage');
-                cropImage.src = event.target.result;
-                
-                // Initialize cropper
-                if (cropper) {
-                    cropper.destroy();
-                }
-                cropper = new Cropper(cropImage, {
-                    aspectRatio: 3/4,
-                    viewMode: 1,
-                    dragMode: 'move',
-                    autoCropArea: 1,
-                    restore: false,
-                    guides: true,
-                    center: true,
-                    highlight: false,
-                    cropBoxMovable: true,
-                    cropBoxResizable: true,
-                    toggleDragModeOnDblclick: false,
-                });
-                
-                document.getElementById('cropModal').classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
+            if (!isMobileDevice()) {
+                // Desktop: Auto-open cropper
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const cropImage = document.getElementById('cropImage');
+                    cropImage.src = event.target.result;
+                    initCropper(cropImage);
+                    document.getElementById('cropModal').classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                // Mobile: Show crop button
+                openCropBtn.classList.remove('hidden');
+                openCropBtn.disabled = false;
+            }
         } else {
             fileNameEl.textContent = "";
             fileInputLabel.classList.remove("file-selected");
@@ -71,10 +120,10 @@ window.onload = () => {
             cropper.destroy();
             cropper = null;
         }
-        // Reset the file input completely
-        imageUpload.value = '';
-        fileNameEl.textContent = '';
-        fileInputLabel.classList.remove('file-selected');
+        if (openCropBtn) {
+            openCropBtn.classList.remove('hidden');
+            openCropBtn.disabled = false;
+        }
     }
 
     document.getElementById('closeCropModal').addEventListener('click', resetCropper);
@@ -86,49 +135,21 @@ window.onload = () => {
             document.getElementById('cropModal').classList.add('hidden');
             cropper.destroy();
             cropper = null;
-            // Clear the file input but keep the filename displayed
             const fileName = imageUpload.files[0].name;
-            imageUpload.value = ''; // Reset the file input
             fileNameEl.textContent = fileName + ' (Cropped)';
+            if (openCropBtn) {
+                openCropBtn.classList.add('hidden');
+                openCropBtn.disabled = true;
+            }
         }
     });
 
-    // Crop modal handlers
-    function resetCropper() {
-        document.getElementById('cropModal').classList.add('hidden');
-        if (cropper) {
-            cropper.destroy();
-            cropper = null;
-        }
-        // Reset the file input completely
-        imageUpload.value = '';
-        fileNameEl.textContent = '';
-        fileInputLabel.classList.remove('file-selected');
-    }
-
-    document.getElementById('closeCropModal').addEventListener('click', resetCropper);
-    document.getElementById('cancelCrop').addEventListener('click', resetCropper);
-
-    document.getElementById('applyCrop').addEventListener('click', () => {
-        if (cropper) {
-            croppedImage = cropper.getCroppedCanvas().toDataURL();
-            document.getElementById('cropModal').classList.add('hidden');
-            cropper.destroy();
-            cropper = null;
-            // Clear the file input but keep the filename displayed
-            const fileName = imageUpload.files[0].name;
-            imageUpload.value = ''; // Reset the file input
-            fileNameEl.textContent = fileName + ' (Cropped)';
-        }
-    });
-
-    // Main "Generate" button click event
+    // Generate button handler
     generateBtn.addEventListener("click", () => {
         const firstName = firstNameEl.value;
         const lastName = lastNameEl.value;
         const file = imageUpload.files[0];
 
-        // 1. Validation
         if (!firstName || !lastName || !file) {
             alert("Please fill in all fields and upload a photo.");
             return;
@@ -137,14 +158,11 @@ window.onload = () => {
         generateBtn.textContent = "Generating...";
         generateBtn.disabled = true;
 
-        // 2. Create image objects
         const baseImage = new Image();
         const userImage = new Image();
 
-        // Set crossOrigin for the template image to avoid canvas errors
         baseImage.crossOrigin = "Anonymous";
         
-        // 3. Set up event listeners for image loading
         let baseImageLoaded = false;
         let userImageLoaded = false;
 
@@ -174,31 +192,26 @@ window.onload = () => {
             generateBtn.disabled = false;
         };
 
-        // 4. Start loading the images
         baseImage.src = "template.jpg";
         if (croppedImage) {
             userImage.src = croppedImage;
-            croppedImage = null; // Clear it after use
+            croppedImage = null;
         } else {
             userImage.src = URL.createObjectURL(file);
         }
     });
 
     function drawCanvas(firstName, lastName, baseImage, userImage) {
-        // Set canvas dimensions to match the template
         canvas.width = baseImage.width;
         canvas.height = baseImage.height;
 
-        // Draw the new background image (bg.jpg) synchronously before everything else
         const bgImg = new window.Image();
-        bgImg.crossOrigin = "Anonymous";  // Add cross-origin support
+        bgImg.crossOrigin = "Anonymous";
         bgImg.onload = function() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
-            // Draw the template overlay
             ctx.drawImage(baseImage, 0, 0);
 
-            // --- Blue box (frame) ---
             const box = { x: 80, y: 588, w: 380, h: 400, r: 30 };
             ctx.save();
             ctx.beginPath();
@@ -207,8 +220,7 @@ window.onload = () => {
             ctx.fill();
             ctx.restore();
 
-            // --- Larger image frame, thinner border ---
-            const imgMargin = 18; // smaller margin for bigger image
+            const imgMargin = 18;
             const nameHeight = 60;
             const imageBox = {
                 x: box.x + imgMargin,
@@ -216,6 +228,7 @@ window.onload = () => {
                 w: box.w - imgMargin * 2,
                 h: box.h - imgMargin * 2 - nameHeight
             };
+
             ctx.save();
             ctx.beginPath();
             roundedRect(ctx, imageBox.x, imageBox.y, imageBox.w, imageBox.h, 22);
@@ -223,15 +236,15 @@ window.onload = () => {
             const { x, y, width, height } = getCoverDimensions(userImage, imageBox);
             ctx.drawImage(userImage, x, y, width, height);
             ctx.restore();
+
             ctx.save();
             ctx.beginPath();
             roundedRect(ctx, imageBox.x, imageBox.y, imageBox.w, imageBox.h, 22);
-            ctx.lineWidth = 2.5; // thinner border
+            ctx.lineWidth = 2.5;
             ctx.strokeStyle = 'white';
             ctx.stroke();
             ctx.restore();
 
-            // --- Name inside the blue box, just below the image ---
             const fullName = `${firstName} ${lastName}`;
             ctx.save();
             ctx.fillStyle = 'white';
@@ -246,16 +259,14 @@ window.onload = () => {
             }
             ctx.restore();
 
-            // Show the result
             const finalImageDataURL = canvas.toDataURL('image/png');
             previewImg.src = finalImageDataURL;
             downloadBtn.href = finalImageDataURL;
             outputArea.classList.remove('hidden');
-            // Reset button
+            
             generateBtn.textContent = 'Generate Poster';
             generateBtn.disabled = false;
             
-            // Hide the cropping feature and file input after generating
             document.querySelector('.file-input-wrapper').style.display = 'none';
             document.getElementById('cropModal').classList.add('hidden');
             if (cropper) {
@@ -263,11 +274,9 @@ window.onload = () => {
                 cropper = null;
             }
         };
-        // Use the template image as background
         bgImg.src = '111612.jpg';
     }
 
-    // Helper: draw a rounded rectangle path
     function roundedRect(ctx, x, y, w, h, r) {
         ctx.moveTo(x + r, y);
         ctx.lineTo(x + w - r, y);
@@ -280,23 +289,20 @@ window.onload = () => {
         ctx.quadraticCurveTo(x, y, x + r, y);
     }
 
-    // Helper function to scale an image to "cover" a container
     function getCoverDimensions(img, box) {
         const imgRatio = img.width / img.height;
         const boxRatio = box.w / box.h;
         let newWidth, newHeight, newX, newY;
 
         if (imgRatio > boxRatio) {
-            // Image is wider than the box
             newHeight = box.h;
             newWidth = newHeight * imgRatio;
-            newX = box.x - (newWidth - box.w) / 2; // Center horizontally
+            newX = box.x - (newWidth - box.w) / 2;
             newY = box.y;
         } else {
-            // Image is taller or same ratio
             newWidth = box.w;
             newHeight = newWidth / imgRatio;
-            newY = box.y - (newHeight - box.h) / 2; // Center vertically
+            newY = box.y - (newHeight - box.h) / 2;
             newX = box.x;
         }
         

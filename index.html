@@ -58,8 +58,18 @@
                         <img id="cropImage" src="" alt="Image to crop">
                     </div>
                     <div class="modal-footer">
-                        <button id="cancelCrop">Cancel</button>
-                        <button id="applyCrop">Apply Crop</button>
+                        <!-- Touch-friendly controls for mobile: zoom/rotate/reset -->
+                        <div class="crop-controls">
+                            <button type="button" id="zoomOut" class="control">-</button>
+                            <button type="button" id="zoomIn" class="control">+</button>
+                            <button type="button" id="rotateLeft" class="control">⟲</button>
+                            <button type="button" id="rotateRight" class="control">⟲</button>
+                            <button type="button" id="resetCropView" class="control">Reset</button>
+                        </div>
+                        <div class="modal-actions">
+                            <button id="cancelCrop">Cancel</button>
+                            <button id="applyCrop">Apply Crop</button>
+                        </div>
                     </div>
                 </div>
             </div>
