@@ -92,6 +92,7 @@ window.onload = () => {
 
         // Draw the new background image (bg.jpg) synchronously before everything else
         const bgImg = new window.Image();
+        bgImg.crossOrigin = "Anonymous";  // Add cross-origin support
         bgImg.onload = function() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
@@ -155,8 +156,8 @@ window.onload = () => {
             generateBtn.textContent = 'Generate Poster';
             generateBtn.disabled = false;
         };
-        // Use absolute or relative path as needed
-        bgImg.src = './bg.jpg';
+        // Use the template image as background
+        bgImg.src = '111612.jpg';
     }
 
     // Helper: draw a rounded rectangle path
